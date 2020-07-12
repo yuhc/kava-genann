@@ -9,6 +9,14 @@ artificial neural networks (ANN) in C. Its primary focus is on being simple,
 fast, reliable, and hackable. It achieves this by providing only the necessary
 functions and little extra.
 
+# Build Genann-GPU
+
+```Shell
+$ mkdir build && cd build
+$ cmake ../ && make
+$ ./runmnist
+```
+
 ## Features
 
 - **ANSI C with no dependencies**.

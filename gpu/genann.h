@@ -68,6 +68,9 @@ typedef struct genann {
     /* Stores delta of each hidden and output neuron (total_neurons - inputs long). */
     double *delta;
 
+    /* Copy of the struct on GPU (GPU memory address). */
+    struct genann *d_ann;
+
 } genann;
 
 /* Creates and returns a new ann. */
@@ -79,8 +82,11 @@ genann *genann_read(FILE *in);
 /* Sets weights randomly. Called by init. */
 void genann_randomize(genann *ann);
 
-/* Returns a new copy of ann. */
+/* Returns a new copy of ann on CPU. */
 genann *genann_copy(genann const *ann);
+
+/* Copies ann to device. Returns the GPU memory address. */
+genann *genann_device_copy(genann const *ann);
 
 /* Frees the memory used by an ann. */
 void genann_free(genann *ann);

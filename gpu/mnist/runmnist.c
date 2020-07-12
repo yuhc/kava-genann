@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
 
     //char* labelFileName = "mnist/t10k-labels.idx1-ubyte";
     //char* imageFileName = "mnist/t10k-images.idx3-ubyte";
-    char* labelFileName = "mnist/train-labels.idx1-ubyte";
-    char* imageFileName = "mnist/train-images.idx3-ubyte";
+    char* labelFileName = "../mnist/train-labels.idx1-ubyte";
+    char* imageFileName = "../mnist/train-images.idx3-ubyte";
 
     mnist_data *data_raw;
     mnist_data_ann *data_ann;
