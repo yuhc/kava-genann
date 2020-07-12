@@ -1,0 +1,10 @@
+*.o
+*.txt
+*.swp
+
+example1
+example2
+example3
+example4
+test
+runmnist
