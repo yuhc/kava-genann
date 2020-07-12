@@ -31,7 +31,7 @@ runmnist: mnist/runmnist.o mnist/mnist.o genann.o
 
 clean:
 	$(RM) *.o mnist/*.o
-	$(RM) test example1 example2 example3 example4 *.exe
+	$(RM) test example1 example2 example3 example4 *.exe runmnist
 	$(RM) persist.txt
 
 .PHONY: sigmoid threshold linear clean
