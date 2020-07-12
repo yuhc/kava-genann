@@ -145,6 +145,22 @@ genann *genann_device_copy(genann const *ann) {
 	return ret;
 }
 
+genann *genann_copy(genann const *ann) {
+    const int size = sizeof(genann) + sizeof(double) * (ann->total_weights + ann->total_neurons + (ann->total_neurons - ann->inputs));
+    genann *ret = (genann *)malloc(size);
+    if (!ret) return 0;
+
+    memcpy(ret, ann, size);
+
+    /* Set pointers. */
+    ret->weight = (double*)((char*)ret + sizeof(genann));
+    ret->output = ret->weight + ret->total_weights;
+    ret->delta = ret->output + ret->total_neurons;
+    ret->d_ann = genann_device_copy(ann);
+
+    return ret;
+}
+
 void copy_back_genann_and_print(genann const *d_ann, genann *ann) {
 	const int size = sizeof(genann) + sizeof(double) * (ann->total_weights + ann->total_neurons + (ann->total_neurons - ann->inputs));
 	cudaMemcpy((void *)ann, d_ann, size, cudaMemcpyDeviceToHost);

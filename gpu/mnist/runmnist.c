@@ -19,7 +19,7 @@ void copy_to_double(mnist_data_ann *data_ann, mnist_data *data_raw, int cnt) {
 int main(int argc, char *argv[])
 {
     printf("GENANN example 5.\n");
-    printf("Train a MNIST.\n");
+    printf("Train a MNIST on CUDA GPU.\n");
 
     //char* labelFileName = "mnist/t10k-labels.idx1-ubyte";
     //char* imageFileName = "mnist/t10k-images.idx3-ubyte";
