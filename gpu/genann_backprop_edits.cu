@@ -34,7 +34,7 @@
 
 #define LOOKUP_SIZE 4096
 
-#define PRINT_OUTPUT 1
+#define PRINT_OUTPUT 0
 
 #ifdef __GNUC__
 #define likely(x)       __builtin_expect(!!(x), 1)
@@ -131,8 +131,8 @@ __global__ void set_genann_pointers_device(genann *d_ann) {
 	d_ann->delta = d_ann->output + d_ann->total_neurons;
 }
 
-/* copy a genann struct to GPU using CUDA APIs 
- * also recalculate the pointer locations so that they point to device memory 
+/* copy a genann struct to GPU using CUDA APIs, also recalculate the pointer locations
+ * so that they point to device memory. This function doesn't update ann->d_ann.
  */
 genann *genann_device_copy(genann const *ann) {
 	const int size = sizeof(genann) + sizeof(double) * (ann->total_weights + ann->total_neurons + (ann->total_neurons - ann->inputs));
@@ -156,7 +156,10 @@ genann *genann_copy(genann const *ann) {
     ret->weight = (double*)((char*)ret + sizeof(genann));
     ret->output = ret->weight + ret->total_weights;
     ret->delta = ret->output + ret->total_neurons;
-    ret->d_ann = genann_device_copy(ann);
+    cudaMalloc((void **)&ret->d_ann, size);
+	if (!ret->d_ann) return 0;
+	cudaMemcpy(ret->d_ann, ret, size, cudaMemcpyHostToDevice);
+	set_genann_pointers_device<<<1, 1>>>(ret->d_ann);
 
     return ret;
 }
@@ -170,22 +173,20 @@ void copy_back_genann_and_print(genann const *d_ann, genann *ann) {
 		: (0));
 	int n = (ann->hidden_layers ? ann->hidden : ann->inputs) + 1;
 	double *d = ann->delta; /* First delta. */
-	if (!PRINT_OUTPUT) return;
-	/*
-	for (int i = 0; i < ann->outputs; i++) {
-		printf("weight: %lf\n", w[i]);
-	for (int i = 0; i < ann->inputs; i++) {
-		printf("input: %lf\n", ann->output[i]);
-	}
-	double *o = ann->output + ann->inputs;
-	for (int i = 0; i < ann->hidden; i++) {
-		printf("hidden output: %lf\n", o[i]);
-	}
-	for (int i = 0; i < ann->hidden; i++) {
-		printf("delta: %lf\n", d[i]);
-	}
-	printf("output : %lf\n", o[ann->hidden*ann->hidden_layers]);
-    */
+    ann->d_ann = (genann *)d_ann;
+
+#if PRINT_OUTPUT
+    for (int i = 0; i < ann->outputs; i++)
+        printf("weight: %lf\n", w[i]);
+    for (int i = 0; i < ann->inputs; i++)
+        printf("input: %lf\n", ann->output[i]);
+    double *o = ann->output + ann->inputs;
+    for (int i = 0; i < ann->hidden; i++)
+        printf("hidden output: %lf\n", o[i]);
+    for (int i = 0; i < ann->hidden; i++)
+        printf("delta: %lf\n", d[i]);
+    printf("output : %lf\n", o[ann->hidden * ann->hidden_layers]);
+#endif
 }
 
 void genann_free(genann *ann) {
@@ -262,13 +263,9 @@ void genann_run_internal(genann *ann, double const *inputs) {
 	double *d_inputs;
 	cudaMalloc((void**)&d_inputs, sizeof(double) * ann->inputs);
 	cudaMemcpy(d_inputs, inputs, sizeof(double) * ann->inputs, cudaMemcpyHostToDevice);
+    /* Copy the inputs to the scratch area, where we also store each neuron's
+     * output, for consistency. This way the first layer isn't a special case. */
 	copy_inputs_to_device << <1, 1 >> > (d_ann, d_inputs, ann->inputs);
-	copy_back_genann_and_print(d_ann, ann);
-	/* copy to device to run on GPU */
-	//memcpy(ann->output, inputs, sizeof(double) * ann->inputs);
-	//genann *d_ann = genann_device_copy(ann);
-	/* Copy the inputs to the scratch area, where we also store each d_neuron's
-	* output, for consistency. This way the first layer isn't a special case. */
 
 	int h;
 
@@ -280,6 +277,7 @@ void genann_run_internal(genann *ann, double const *inputs) {
 
 	calculate_address_hidden_forward << <1, 1 >> > (d_ann, ann->hidden_layers);
 	genann_run_output << <1, ann->outputs >> > (d_ann);
+    cudaFree(d_inputs);
 }
 
 /* external API for running genann forward */
@@ -415,7 +413,6 @@ void genann_train(genann const *ann, double const *inputs, double const *desired
 	{
 		/* calculate the device addresses */
 		calculate_device_addresses_train_outputs << <1, 1 >> > (d_ann);
-		
 		/* Set output layer weights. */
 		train_output_weights << <1, ann->outputs >> > (d_ann, learning_rate);
 	}
@@ -424,7 +421,6 @@ void genann_train(genann const *ann, double const *inputs, double const *desired
 	/* Train the hidden layers. */
 	for (h = ann->hidden_layers - 1; h >= 0; --h) {
 		calculate_device_addresses_train_hidden << <1, 1 >> > (d_ann, h);
-		
 		train_hidden_weights << <1, ann->hidden >> > (d_ann, h, learning_rate);
 	}
 
