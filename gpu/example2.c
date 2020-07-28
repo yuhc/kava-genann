@@ -56,9 +56,7 @@ int main(int argc, char *argv[])
             ann = save;
         }
 
-    } while (err > 1.01);
-    //} while (err > 0.01);
-    //For some reason the GPU code is broken and cannot reach satisfied precision.
+    } while (err > 0.01);
 
     printf("Finished in %d loops.\n", count);
 

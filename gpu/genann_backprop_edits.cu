@@ -153,9 +153,7 @@ genann *genann_copy(genann const *ann) {
     memcpy(ret, ann, size);
 
     /* Set pointers. */
-    ret->weight = (double*)((char*)ret + sizeof(genann));
-    ret->output = ret->weight + ret->total_weights;
-    ret->delta = ret->output + ret->total_neurons;
+	set_genann_pointers(ret);
     cudaMalloc((void **)&ret->d_ann, size);
 	if (!ret->d_ann) return 0;
 	cudaMemcpy(ret->d_ann, ret, size, cudaMemcpyHostToDevice);
@@ -266,6 +264,11 @@ void genann_run_internal(genann *ann, double const *inputs) {
     /* Copy the inputs to the scratch area, where we also store each neuron's
      * output, for consistency. This way the first layer isn't a special case. */
 	copy_inputs_to_device << <1, 1 >> > (d_ann, d_inputs, ann->inputs);
+
+    /* Copy (potentially) updated weights to device. */
+	cudaMemcpy((char *)ann->d_ann + sizeof(struct genann),
+            (char *)ann + sizeof(struct genann),
+            sizeof(double) * ann->total_weights, cudaMemcpyHostToDevice);
 
 	int h;
 
