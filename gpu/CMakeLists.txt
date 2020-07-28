@@ -5,20 +5,19 @@ if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE Release)
 endif()
 
-add_definitions(-std=c++11)
-
 include_directories(
   ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/mnist
 )
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=sm_61 --use_fast_math --ptxas-options=-v")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math --ptxas-options=-v")
 
 # Build libgenann.so
 # set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
 add_library(genann SHARED
   ${PROJECT_SOURCE_DIR}/genann_backprop_edits.cu
 )
+set_property(TARGET genann PROPERTY CUDA_ARCHITECTURES 61)
 
 function(add_cuda_target name sources)
   add_executable(${name} ${sources})
