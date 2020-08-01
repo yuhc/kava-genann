@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "genann.h"
 #include "mnist.h"
+#include <sys/time.h>
 #include <time.h>
 
 #define SIZE 28
@@ -42,6 +43,9 @@ int main(int argc, char *argv[])
 
     int i;
 
+    struct timeval start_time, end_time;
+    gettimeofday(&start_time, NULL);
+
     /* New network with 2 inputs, 1 hidden layer of 2 neurons, and 1 output. */
     genann *ann = genann_init(28*28, 3, 128, LABELS_SIZE);
     double * arr = (double*)malloc(sizeof(double) * LABELS_SIZE);
@@ -76,5 +80,9 @@ int main(int argc, char *argv[])
 
     genann_free(ann);
     free(data_raw);
+
+    gettimeofday(&end_time, NULL);
+    printf("Elapsed time: %.3lf usec\n",
+            (end_time.tv_sec - start_time.tv_sec) * 1000000.0 + (end_time.tv_usec - start_time.tv_usec));
     return 0;
 }

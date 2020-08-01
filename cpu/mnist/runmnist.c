@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "genann.h"
 #include "mnist.h"
+#include <sys/time.h>
 #include <time.h>
 
 #define SIZE 28

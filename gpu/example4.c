@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 #include <string.h>
 #include <math.h>
@@ -80,6 +81,9 @@ int main(int argc, char *argv[])
     /* Load the data from file. */
     load_data();
 
+    struct timeval start_time, end_time;
+    gettimeofday(&start_time, NULL);
+
     /* 4 inputs.
      * 1 hidden layer(s) of 4 neurons.
      * 3 outputs (1 per class)
@@ -109,11 +113,12 @@ int main(int argc, char *argv[])
 
     printf("%d/%d correct (%0.1f%%).\n", correct, samples, (double)correct / samples * 100.0);
 
-
-
     genann_free(ann);
     free(input);
     free(class);
 
+    gettimeofday(&end_time, NULL);
+    printf("Elapsed time: %.3lf usec\n",
+            (end_time.tv_sec - start_time.tv_sec) * 1000000.0 + (end_time.tv_usec - start_time.tv_usec));
     return 0;
 }
