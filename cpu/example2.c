@@ -16,6 +16,9 @@ int main(int argc, char *argv[])
     const double output[4] = {0, 1, 1, 0};
     int i;
 
+    struct timeval start_time, end_time;
+    gettimeofday(&start_time, NULL);
+
     /* New network with 2 inputs,
      * 1 hidden layer of 2 neurons,
      * and 1 output. */
@@ -67,5 +70,9 @@ int main(int argc, char *argv[])
     printf("Output for [%1.f, %1.f] is %1.f.\n", input[3][0], input[3][1], *genann_run(ann, input[3]));
 
     genann_free(ann);
+
+    gettimeofday(&end_time, NULL);
+    printf("Elapsed time: %.3lf usec\n",
+            (end_time.tv_sec - start_time.tv_sec) * 1000000.0 + (end_time.tv_usec - start_time.tv_usec));
     return 0;
 }
